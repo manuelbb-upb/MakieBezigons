@@ -1,0 +1,18 @@
+name = "MakieBezigons"
+uuid = "51101156-3b12-4413-a371-36a7093ae10c"
+authors = ["manuelbb-upb <manuelbb@mail.uni-paderborn.de>"]
+version = "0.1.0"
+
+[deps]
+FixedPointNumbers = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
+FreeType = "b38be410-82b0-50bf-ab77-7b57e271db43"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
+
+[compat]
+FixedPointNumbers = "0.8.5"
+FreeType = "4.1.1"
+LinearAlgebra = "1.11.0"
+Makie = "0.24.6"
+UnPack = "1.0.2"
