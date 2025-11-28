@@ -26,12 +26,16 @@ function __bezigon_arrow_data(spec::AbstractArrowSpec; kwargs...)
 end
 
 function _arrow_data_to_geometry(data; reversed, swapped, align, sw, kwargs...)
-    @unpack bpath, tip_end, line_end = data
+    @unpack bpath, line_end = data
+    if reversed
+        #tip_end = -get(data, :visual_back_end, data.back_end)
+        tip_end = -data.back_end
+        line_end *= -1
+    else
+        @unpack tip_end = data
+    end
     sw = get(data, :sw, sw)
-    path_transform = (
-        reversed ? -1 : 1,
-        swapped ? -1 : 1
-    )
+    
     if align != 0
         connector_end = (1-align) * line_end + align * tip_end
         shift_end = connector_end - line_end
@@ -41,10 +45,12 @@ function _arrow_data_to_geometry(data; reversed, swapped, align, sw, kwargs...)
     target_pos = Point2f(tip_end + shift_end, 0)
     connector_pos = Point2f(line_end + shift_end, 0)
  
-    if path_transform != (1, 1)
+    if reversed || swapped
+        path_transform = (
+            reversed ? -1 : 1,
+            swapped ? -1 : 1
+        )
         bpath = scale(bpath, path_transform)
-        target_pos = target_pos .* path_transform
-        connector_pos = connector_pos .* path_transform
     end
     return BezigonGeometry(bpath, target_pos, connector_pos), (; sw,)
 end

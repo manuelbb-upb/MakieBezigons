@@ -146,13 +146,6 @@ function bezigon_strokecolor(bez::TypedBezigon)
     return bez.props.strokecolor
 end
 
-function rotation_offset(bez::TypedBezigon)
-    if bez.props.reversed
-        return -pi32
-    end
-    return 0
-end
-
 #===========================================#
 
 #============================================

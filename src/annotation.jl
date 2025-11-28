@@ -23,7 +23,6 @@ function Makie.plotspecs(_bez::AbstractBezigonInstance, pos; rotation, color, li
         return pspecs
     end
     bez = transformed_bezigon(_bez; target! = (0, 0), rotation = 0)
-    rotation += rotation_offset(bez)
     if is_bezigon_filled(bez)
         marker = bezigon_path(bez)
         fcolor = bezigon_fillcolor(bez)

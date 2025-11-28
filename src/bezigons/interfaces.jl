@@ -37,8 +37,6 @@ bezigon_joinstyle(::AbstractBezigonInstance) = :miter
 bezigon_linecap(::AbstractBezigonInstance) = :butt
 bezigon_miter_limit(::AbstractBezigonInstance) = pi32 / 3
 
-rotation_offset(::AbstractBezigonInstance) = 0
-
 function bezigon_outline_path(bez::AbstractBezigonInstance)
     return stroke_bezier_path(
         bezigon_path(bez), F16_16;

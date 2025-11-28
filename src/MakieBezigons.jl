@@ -36,6 +36,7 @@ include("bezigons/simple/bullet.jl")
 
 include("bezigons/arrows_meta/arrows_meta.jl")
 include("bezigons/arrows_meta/latex.jl")
+include("bezigons/arrows_meta/computermodernright.jl")
 
 include("ft_utils.jl")
 include("annotation.jl")

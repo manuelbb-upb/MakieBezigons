@@ -1,75 +1,98 @@
-# TODO
-struct ComputerModernRightarrowSpecification{attrs_Type} <: AbstractBezigonDecoSpecification
-    attrs :: attrs_Type
+struct ComputerModernRightarrow{data_Type} <: AbstractArrowSpec
+    data :: data_Type
 end
 
-function ComputerModernRightarrowSpecification(;
+function ComputerModernRightTip(; kwargs...)
+    return ComputerModernRightarrow(; reversed = false, kwargs...)
+end
+function ComputerModernRightTail(; kwargs...)
+    return ComputerModernRightarrow(; reversed = true, kwargs...)
+end
+
+function _fallback_attrs(
+    ::Type{<:ComputerModernRightarrow};
     length = (1.9f0, 2.2f0),
     width_ = (0f0, 2.096744f0),
-    line_width = (0f0, 1f0),
+    line_width = (0, 1),
     linecap = :round,
     joinstyle = :round,
-    is_filled = false,
+    filled = false,
     kwargs...
-    )
-    attrs = _setup_base_bezigon_attributes(;
-        length, width_, line_width, linecap, joinstyle, is_filled, kwargs...)
-    return ComputerModernRightarrowSpecification(attrs)
+)
+    return (; length, width_, line_width, linecap, joinstyle, filled, closed = false)
 end
 
-function ComputerModernRightarrowTip(; kwargs...)
-    ComputerModernRightarrowSpecification(; reversed=false, kwargs...)
-end
-function ComputerModernRightarrowTail(; kwargs...)
-    ComputerModernRightarrowSpecification(; reversed=true, kwargs...)
-end
 
-function _register_path_computations!(graph, ::Type{<:ComputerModernRightarrowSpecification})
-    graph = _register_appearance_attributes!(graph)
+function __bezigon_arrow_data(
+    spec::ComputerModernRightarrow;
+    bez_x, bez_y, sw, sw_par,
+    align, reversed, swapped, linecap, joinstyle, miter_limit
+)
     cx1 = -.81731f0; cy1 = .2f0
     cx2 = -.41019f0; cy2 = .05833333f0
-    map!(
-        graph, 
-        [:arrow_length, :arrow_width, :strokewidth_fin, :stroke_bgon, :reversed, :joinstyle, :miter_limit], 
-        [:inner_length, :inner_width, :line_end, :back_end, :tip_end, :miter_limit_fin]
-    ) do arr_length, arr_width, _sw, stroke_bgon, rev, join, mlimit
-        sw = stroke_bgon ? _sw : 0f0
-        inner_length = arr_length - sw
-        inner_width = arr_width - sw
 
-        tan_psi_tip = cy2 * inner_width / ((1-cx2) * inner_length)
-        sin_psi_tip_inv = sqrt( 1/tan_psi_tip^2 + 1)
-        miter_half_len = sin_psi_tip_inv * sw / 2
+    arr_length = bez_x
+    arr_width = bez_y
+
+    inner_length = arr_length - sw
+    if inner_length < eps32
+        _sw = arr_length - eps32
+        sw = min(sw, _sw)
+    end
+
+    inner_width = arr_width - sw
+    if inner_width < eps32
+        _sw = arr_width - eps32
+        sw = min(sw, _sw)
+    end
+
+    back_end = - inner_length - sw / 2
+    line_end = - sw / 2
+    visual_back_end = sw / 2
+
+     if sw > 0
+        cot_psi_tip = ((1-cx2) * inner_length) / (cy2 * inner_width)
+        csc_psi_tip = sqrt(cot_psi_tip^2 + 1)
+        sin_psi_tip = 1 / csc_psi_tip
+
+        miter_half_len = csc_psi_tip * sw / 2
+        miter_half_len_max = Makie.miter_angle_to_distance(miter_limit) * sw
         tip_end = if join == :round
             sw / 2
-        elseif join == :miter
+        elseif join == :miter && miter_half_len <= miter_half_len_max
             miter_half_len
         else# if join == :bevel
-            1 / sin_psi_tip_inv * sw
+            sin_psi_tip * sw
         end
-        miter_limit = if join == :miter
-            _mlimit = miter_distance_to_angle(miter_half_len / sw) / 2
-            max(mlimit, _mlimit)
-        else
-            mlimit
+    else
+        tip_end = 0f0
+    end
+
+    bezier_points_inner = let L = inner_length, W = inner_width;
+        p0 = Point2d(-L, W/2)
+        p1 = Point2d(cx1 * L, cy1 * W)
+        p2 = Point2d(cx2 * L, cy2 * W)
+        p3 = Point2d(0, 0)
+        (p0, p1, p2, p3)
+    end
+
+    if sw > 0
+        bezier_points = let L = arr_length, W = arr_width;
+            p0 = Point2d(-L, W/2)
+            p1 = Point2d(cx1 * L, cy1 * W)
+            p2 = Point2d(cx2 * L, cy2 * W)
+            p3 = Point2d(0, 0)
+            P0 = bezier_points_inner[1]
+            P3 = bezier_points_inner[4]
+            _match_bezier_curveto_tangents(p0, p1, p2, p3, P0, P3)
         end
-        back_end = inner_length - sw / 2
-        line_end = - sw / 2
-        return (inner_length, inner_width, line_end, back_end, tip_end, miter_limit)
+    else
+        bezier_points = bezier_points_inner
     end
-    
-    map!(graph, [:inner_length, :inner_width], :bezier_points) do L, W
-        p0 = Point2(-L, W/2)
-        p1 = Point2(cx1 * L, cy1 * W)
-        p2 = Point2(cx2 * L, cy2 * W)
-        p3 = Point2(0, 0)
-        return (p0, p1, p2, p3)
-    end
-    
-    map!(
-        graph, :bezier_points, :path0
-    ) do (P0, P1, P2, P3) 
-        swap(p) = Point2d(p[1], -p[2])
+   
+    swap(p) = Point2d(p[1], -p[2])
+
+    bpath = let (P0, P1, P2, P3) = bezier_points;
         _P2 = swap(P2)
         _P1 = swap(P1)
         _P0 = swap(P0)
@@ -79,8 +102,5 @@ function _register_path_computations!(graph, ::Type{<:ComputerModernRightarrowSp
             CurveTo(_P2,_P1,_P0)    # bottom left
         ])
     end
-    
-    graph = _register_bezigon_drawing_cmds!(graph)
-
-    return graph
+    return (; visual_back_end, bpath, tip_end, line_end, back_end, sw)
 end

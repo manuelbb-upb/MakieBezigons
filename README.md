@@ -35,7 +35,7 @@ f = let
     
     sprinkle!(
         ax, (40, 40); 
-        marker = MakieBezigons.LatexTail(; length = 40),
+        marker = MakieBezigons.LatexTip(; length = 40),
         markersize = 1, 
         markerspace = :data,
         color = :purple,
@@ -58,9 +58,17 @@ f = let
     fig = Figure()
     ax = Axis(fig[1, 1], xgridvisible = false, ygridvisible = false)
     shrinks = [(0, 0), (5, 5), (10, 10), (20, 20), (5, 20), (20, 5)]
-    style = MakieBezigons.PathArrow(; tip = MakieBezigons.LatexTip(), tail = MakieBezigons.LatexTail(; scale = 2, fillcolor=:red, line_width=(0, 2)))
+    style_odd = MakieBezigons.PathArrow(; 
+        tip = MakieBezigons.LatexTip(; scale=2, fillcolor=:red, line_width = (0, 2)),
+        tail = MakieBezigons.ComputerModernRightTail()
+    )
+    style_even = MakieBezigons.PathArrow(; 
+        tip = MakieBezigons.ComputerModernRightTail(),
+        tail = MakieBezigons.LatexTip(; scale=2, fillcolor=:red, line_width = (0, 2))
+    )
     for (i, shrink) in enumerate(shrinks)
-        scatter!(ax, 0, i)
+        style = i % 2 == 1 ? style_odd : style_even
+        scatter!(ax, 0, i; markersize=9)
         annotation!(ax, -200, 0, 0, i; text = "shrink = $shrink", shrink, style)
     end
     fig

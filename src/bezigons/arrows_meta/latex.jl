@@ -1,22 +1,24 @@
-struct LatexArrow{is_tip, data_Type} <: AbstractArrowSpec
+struct LatexArrow{data_Type} <: AbstractArrowSpec
     data :: data_Type
 end
-const LatexTip = LatexArrow{true}
-const LatexTail = LatexArrow{false}
-function LatexArrow{T}(data) where T
-    return LatexArrow{T, typeof(data)}(data)
+
+function LatexTip(; kwargs...)
+    return LatexArrow(; reversed = false, kwargs...)
+end
+function LatexTail(; kwargs...)
+    return LatexArrow(; reversed = true, kwargs...)
 end
 
 function _fallback_attrs(
-    ::Type{<:LatexArrow{is_tip}};
+    ::Type{<:LatexArrow};
     linecap = :butt,
     joinstyle = :miter, 
     kwargs...
-) where {is_tip}
+)
     length = (3f0, 4.8f0)
     width_ = (0f0, 0.75f0)
     line_width = (0, 1)
-    return (; length, width_, line_width, linecap, joinstyle, reversed = !is_tip, closed = true)
+    return (; length, width_, line_width, linecap, joinstyle, closed = true)
 end
 
 const LATEX_ARROW_BEZIER_CONSTANTS = (;
